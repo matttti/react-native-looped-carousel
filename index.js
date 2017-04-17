@@ -34,16 +34,11 @@ export default class Carousel extends Component {
     arrows: React.PropTypes.bool,
     arrowsContainerStyle: Text.propTypes.style,
     arrowstyle: Text.propTypes.style,
-    leftArrowText: React.propTypes.oneOfType([
-      React.PropTypes.string,
-      React.PropTypes.element,
-    ]),
-    rightArrowText: React.propTypes.oneOfType([
-      React.PropTypes.string,
-      React.PropTypes.element,
-    ]),
+    leftArrowText: React.PropTypes.string,
+    rightArrowText: React.PropTypes.string,
     chosenBulletStyle: Text.propTypes.style,
     onAnimateNextPage: React.PropTypes.func,
+    revolve: React.PropTypes.bool
   };
 
   static defaultProps = {
@@ -67,6 +62,7 @@ export default class Carousel extends Component {
     leftArrowText: '',
     rightArrowText: '',
     onAnimateNextPage: undefined,
+    revolve: true
   };
 
   constructor(props) {
@@ -100,6 +96,11 @@ export default class Carousel extends Component {
       childrenLength = nextProps.children.length ? nextProps.children.length : 1;
     }
     this.setState({ childrenLength });
+
+    if (nextProps.currentPage && nextProps.currentPage != this.state.currentPage) {
+      this._animateToPage(nextProps.currentPage)
+    }
+
     this._setUpTimer();
   }
 
@@ -164,10 +165,10 @@ export default class Carousel extends Component {
     if (currentPage >= childrenLength) {
       currentPage = 0;
     }
-    if (currentPage === 0) {
+    if (currentPage === 0 && this.props.revolve) {
       this._scrollTo((childrenLength - 1) * width, false);
       this._scrollTo(childrenLength * width, true);
-    } else if (currentPage === 1) {
+    } else if (currentPage === 1 && this.props.revolve) {
       this._scrollTo(0, false);
       this._scrollTo(width, true);
     } else {
@@ -182,9 +183,9 @@ export default class Carousel extends Component {
     const { width } = this.state.size;
     if (childrenLength === 1) {
       this._scrollTo(0, false);
-    } else if (page === 0) {
+    } else if (page === 0 && this.props.revolve) {
       this._scrollTo(childrenLength * width, false);
-    } else if (page === 1) {
+    } else if (page === 1 && this.props.revolve) {
       this._scrollTo(width, false);
     } else {
       this._scrollTo(page * width, false);
@@ -252,8 +253,12 @@ export default class Carousel extends Component {
     return (
       <View style={styles.arrows}>
         <View style={[styles.arrowsContainer, this.props.arrowsContainerStyle]}>
-          <TouchableOpacity onPress={() => this._animateToPage(this._normalizePageNumber(currentPage - 1))} style={this.props.arrowstyle}><Text>{this.props.leftArrowText ? this.props.leftArrowText : 'Left'}</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => this._animateToPage(this._normalizePageNumber(currentPage + 1))} style={this.props.arrowstyle}><Text>{this.props.rightArrowText ? this.props.rightArrowText : 'Right'}</Text></TouchableOpacity>
+          {(this.props.revolve || this.state.currentPage != 0) &&
+            <TouchableOpacity onPress={() => this._animateToPage(this._normalizePageNumber(currentPage - 1))} style={this.props.arrowstyle}><Text>{this.props.leftArrowText ? this.props.leftArrowText : 'Left'}</Text></TouchableOpacity>
+          }
+          {(this.props.revolve || this.state.currentPage < this.state.childrenLength) &&
+            <TouchableOpacity onPress={() => this._animateToPage(this._normalizePageNumber(currentPage + 1))} style={this.props.arrowstyle}><Text>{this.props.rightArrowText ? this.props.rightArrowText : 'Right'}</Text></TouchableOpacity>
+          }
         </View>
       </View>
     );
@@ -270,12 +275,12 @@ export default class Carousel extends Component {
       for (let i = 0; i < children.length; i += 1) {
         pages.push(children[i]);
       }
-      // We want to make infinite pages structure like this: 1-2-3-1-2
-      // so we add first and second page again to the end
-      pages.push(children[0]);
-      pages.push(children[1]);
-    } else if (children.length === 1) {
-      pages.push(children[0]);
+      if(this.props.revolve) {
+        // We want to make infinite pages structure like this: 1-2-3-1-2
+        // so we add first and second page again to the end
+        pages.push(children[0]);
+        pages.push(children[1]);
+      }
     } else if (children) {
       pages.push(children);
     } else {
@@ -315,7 +320,7 @@ export default class Carousel extends Component {
           styles.horizontalScroll,
           this.props.contentContainerStyle,
           {
-            width: size.width * (children.length + (children.length > 1 ? 2 : 0)),
+            width: size.width * (children.length + ((children.length > 1 && this.props.revolve) ? 2 : 0)),
             height: size.height,
           },
         ]}
