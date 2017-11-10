@@ -16,7 +16,7 @@ const PAGE_CHANGE_DELAY = 4000;
  * (loop possible if children count > 1)
 */
 export default class Carousel extends Component {
-  static propTypes = {
+/*  static propTypes = {
     children: React.PropTypes.node.isRequired,
     autoplay: React.PropTypes.bool,
     delay: React.PropTypes.number,
@@ -40,7 +40,7 @@ export default class Carousel extends Component {
     onAnimateNextPage: React.PropTypes.func,
     revolve: React.PropTypes.bool
   };
-
+*/
   static defaultProps = {
     delay: PAGE_CHANGE_DELAY,
     autoplay: true,
